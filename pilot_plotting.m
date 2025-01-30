@@ -1,24 +1,27 @@
 %%
-cd /Users/jansch/projects/opm_baby/data/processed/
 clear tmp
-for k = 1:3
-  tmp(k) = load(sprintf('pil-%03d_results',k),'tlck*');
+for k = 1:7
+  subj = mc_subjinfo(sprintf('pil-%03d',k));
+
+  tmp(k) = load(fullfile(subj.procdir,sprintf('%s_erf_faceshouses',subj.subjname)),'tlck*');
 end
 
 %%
-cd /Users/jansch/projects/opm_baby/code/helmet-v3/
+cd /Users/jansch/projects/opm_baby/helmet-v3/
 load layout
 
-cfg = [];
-cfg.channel = tmp(1).tlck.label(tmp(1).tlck.avg(:,1)~=0);
 
 for k = 1:numel(tmp)
-  
+  cfg = [];
+  cfg.channel = tmp(1).tlck.label(tmp(1).tlck.avg(:,1)~=0); % stick to the original good subset of channels for now
+
   tmp(k).tlck = ft_selectdata(cfg, tmp(k).tlck);
   tmp(k).tlck_faces = ft_selectdata(cfg, tmp(k).tlck_faces);
   tmp(k).tlck_houses = ft_selectdata(cfg, tmp(k).tlck_houses);
 end
 
+% quick and dirty averaging, does not yet take into account the non-missing
+% channels in the later pilots
 for k = 1:numel(tmp)
   if k==1
     avg_faces = tmp(k).tlck_faces;
@@ -38,76 +41,27 @@ grp{3} = {'s1_bz'; 's2_bz'; 's3_bz'; 's4_bz'; 's17_bz'; 's18_bz'; 's19_bz'; 's20
 grp{4} = {'s5_bz'; 's8_bz'; 's11_bz'; 's12_bz'; 's15_bz'; 's16_bz'};
 grp{5} = {'s21_bz'; 's24_bz'; 's127_bz'; 's28_bz'; 's31_bz'; 's32_bz'};
 
+tt = {'left_parietal';'right_parietal';'central';'left_occipital';'right_occipital'};
+
 %%
-fname = '/Users/jansch/projects/opm_baby/data/processed/singleplots.pdf';
+fname = '/Users/jansch/projects/opm_baby/singleplots.pdf';
 
+div = [2 4];
+for k = 1:numel(grp)
+  cfg.channel = grp{k};
+  cfg.title   = tt{k};
+  for m = 1:numel(tmp)
+    cfg.figure = subplot(div(1),div(2),m);
+    ft_singleplotER(cfg, tmp(m).tlck_faces, tmp(m).tlck_houses);
+  end
+  cfg.figure = subplot(div(1),div(2),m+1);
+  ft_singleplotER(cfg, avg_faces, avg_houses);
+  if k==1
+    exportgraphics(gcf, fname)
+    close 
+  else
+    exportgraphics(gcf, fname, 'Append', true)
+    close
+  end
 
-cfg =[];
-cfg.channel = grp{1}; 
-cfg.title   = 'left_parietal';
-cfg.figure  = subplot(221);
-ft_singleplotER(cfg, tmp(1).tlck_faces, tmp(1).tlck_houses);
-cfg.figure  = subplot(222);
-ft_singleplotER(cfg, tmp(2).tlck_faces, tmp(2).tlck_houses);
-cfg.figure  = subplot(223);
-ft_singleplotER(cfg, tmp(3).tlck_faces, tmp(3).tlck_houses);
-cfg.figure  = subplot(224);
-ft_singleplotER(cfg, avg_faces, avg_houses);
-exportgraphics(gcf, fname)
-close 
-
-cfg =[];
-cfg.channel = grp{2}; 
-cfg.title   = 'right_parietal';
-cfg.figure  = subplot(221);
-ft_singleplotER(cfg, tmp(1).tlck_faces, tmp(1).tlck_houses);
-cfg.figure  = subplot(222);
-ft_singleplotER(cfg, tmp(2).tlck_faces, tmp(2).tlck_houses);
-cfg.figure  = subplot(223);
-ft_singleplotER(cfg, tmp(3).tlck_faces, tmp(3).tlck_houses);
-cfg.figure  = subplot(224);
-ft_singleplotER(cfg, avg_faces, avg_houses);
-exportgraphics(gcf, fname, 'Append', true)
-close
-
-cfg =[];
-cfg.channel = grp{3}; 
-cfg.title   = 'central';
-cfg.figure  = subplot(221);
-ft_singleplotER(cfg, tmp(1).tlck_faces, tmp(1).tlck_houses);
-cfg.figure  = subplot(222);
-ft_singleplotER(cfg, tmp(2).tlck_faces, tmp(2).tlck_houses);
-cfg.figure  = subplot(223);
-ft_singleplotER(cfg, tmp(3).tlck_faces, tmp(3).tlck_houses);
-cfg.figure  = subplot(224);
-ft_singleplotER(cfg, avg_faces, avg_houses);
-exportgraphics(gcf, fname, 'Append', true)
-close
-
-cfg =[];
-cfg.channel = grp{4}; 
-cfg.title   = 'left_occipital';
-cfg.figure  = subplot(221);
-ft_singleplotER(cfg, tmp(1).tlck_faces, tmp(1).tlck_houses);
-cfg.figure  = subplot(222);
-ft_singleplotER(cfg, tmp(2).tlck_faces, tmp(2).tlck_houses);
-cfg.figure  = subplot(223);
-ft_singleplotER(cfg, tmp(3).tlck_faces, tmp(3).tlck_houses);
-cfg.figure  = subplot(224);
-ft_singleplotER(cfg, avg_faces, avg_houses);
-exportgraphics(gcf, fname, 'Append', true)
-close
-
-cfg =[];
-cfg.channel = grp{5}; 
-cfg.title   = 'right_occipital';
-cfg.figure  = subplot(221);
-ft_singleplotER(cfg, tmp(1).tlck_faces, tmp(1).tlck_houses);
-cfg.figure  = subplot(222);
-ft_singleplotER(cfg, tmp(2).tlck_faces, tmp(2).tlck_houses);
-cfg.figure  = subplot(223);
-ft_singleplotER(cfg, tmp(3).tlck_faces, tmp(3).tlck_houses);
-cfg.figure  = subplot(224);
-ft_singleplotER(cfg, avg_faces, avg_houses);
-exportgraphics(gcf, fname, 'Append', true)
-close
+end
