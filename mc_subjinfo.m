@@ -1,6 +1,8 @@
 function subj = mc_subjinfo(sub, rawdir, usebids)
 
-assert(ischar(sub));
+if ~ischar(sub)
+  sub = sprintf('sub-%03d', sub);
+end
 
 if nargin<3 || isempty(usebids)
   usebids = true;
@@ -71,7 +73,7 @@ d   = dir(fullfile(basedir, '**'));
 sel = contains({d.name}', 'fif');
 d   = d(sel);
 
-if ~isequal(subjname, 'sub-003') && ~isequal(subjname, 'sub-006')
+if (~isequal(subjname, 'sub-003') && ~isequal(subjname, 'sub-006')) || numel(d)==1
   fprintf('found %d fif-files for this subject, keeping the first one:\n', numel(d));
   keepfif = 1;
 elseif isequal(subjname, 'sub-003') || isequal(subjname, 'sub-006')
@@ -98,6 +100,16 @@ cfg.trialfun = 'ft_trialfun_show';
 cfg          = ft_definetrial(cfg);
 
 subj.event   = cfg.event(:);
+
+% exception, I don't know why, but sub-005 has an offset of 2^16 on all
+% trigger values
+if isequal(subj.subjname, 'sub-005') && subj.event(1).value>2^16
+  for k = 1:numel(subj.event)
+    subj.event(k).value = subj.event(k).value-2^16;
+  end
+end
+
+
 
 %%
 % this section interprets the triggers, required for non-bids only
@@ -139,6 +151,9 @@ if ~usebids
   % get a richer specification of the events
   ev = subj.event_faces_houses;
   for k = 1:numel(ev)
+    if ev(k).value > 2^16
+      ev(k).value = ev(k).value-2.^16;
+    end
     switch ev(k).value
       case {1 2 3 4 5 6}
         ev(k).type = 'face_female';
@@ -167,6 +182,9 @@ if ~usebids
   if isfield(subj, 'event_oddball')
     ev = subj.event_oddball;
     for k = 1:numel(ev)
+      if ev(k).value > 2^16
+        ev(k).value = ev(k).value-2.^16;
+      end
       switch ev(k).value
         case 1
           ev(k).type = 'standard';

@@ -3,9 +3,14 @@ function [tlck, tlck_faces, tlck_houses] = mc_erf_faceshouses(sub)
 subj = mc_subjinfo(sub);
 
 cfg                     = [];
-cfg.event               = subj.event_faces_houses;
-cfg.trialdef.eventvalue = (1:24);
-cfg.trialdef.eventtype  = 'di15';
+if isfield(subj, 'event_faces_houses')
+  cfg.event               = subj.event_faces_houses;
+  cfg.trialdef.eventvalue = (1:24);
+  cfg.trialdef.eventtype  = 'di15';
+else
+  cfg.event               = subj.event;
+  cfg.trialdef.eventtype  = {'house' 'face_male' 'face_female'};
+end
 cfg.trialdef.prestim    = 0.1;
 cfg.trialdef.poststim   = 0.6 - 1./5000;
 cfg.trialfun            = 'ft_trialfun_general';
