@@ -56,12 +56,23 @@ procdir = fullfile(procdir, subjname);
 
 d      = dir(fullfile(videodir, '**'));
 selmp4 = contains({d.name}', 'mp4');
+selannot = contains({d.name}', 'txt');
 dmp4   = d(selmp4);
-fprintf('found %d mp4-files for this subject, keeping the first one:\n', numel(d));
-for k = 1%:numel(dmp4)
-  fprintf('%s\n', dmp4(k).name);
+dannot = d(selannot);
+
+if numel(dmp4)==1
+  videofile = fullfile(dmp4(1).folder, dmp4(1).name);
+else
+  error('more than one videofile detected');
 end
-videofile = fullfile(dmp4(1).folder, dmp4(1).name);
+
+if numel(dannot)==1
+  annotfile = fullfile(dannot.folder, dannot.name);
+elseif numel(dannot)==0
+  annotfile = '';
+else
+  error('more than one annotation file found')
+end
 
 % NOTE: there are a lot of inconsistencies in the naming of the files and
 % in the content of the directories (e.g. with and without emptyroom
@@ -92,6 +103,7 @@ subj.procdir  = procdir;
 subj.subjname = subjname;
 subj.dataset  = dataset;
 subj.videofile = videofile;
+subj.annotfile = annotfile;
 
 
 cfg          = [];
@@ -109,7 +121,12 @@ if isequal(subj.subjname, 'sub-005') && subj.event(1).value>2^16
   end
 end
 
-
+if ~isempty(subj.annotfile)
+  [subj.videoevent, subj.videoevent_artctdef] = mc_videoevents(subj);
+else
+  subj.videoevent = [];
+  subj.videoevent_artfctdef = [];
+end
 
 %%
 % this section interprets the triggers, required for non-bids only
@@ -172,9 +189,9 @@ if ~usebids
       case {107 108 109 110 111 112}
         ev(k).type = 'attentiongetter_off';
       case 254
-        ev(k).type = 'black';
-      case 255
         ev(k).type = 'white';
+      case 255
+        ev(k).type = 'black';
     end
   end
   subj.event_faces_houses_new = ev;
@@ -207,9 +224,9 @@ if ~usebids
         case {107 108 109 110 111 112}
           ev(k).type = 'attentiongetter_off';
         case 254
-          ev(k).type = 'black';
-        case 255
           ev(k).type = 'white';
+        case 255
+          ev(k).type = 'black';
       end
     end
     subj.event_oddball_new = ev;

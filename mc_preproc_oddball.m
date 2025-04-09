@@ -1,18 +1,12 @@
-function data = mc_preproc_faceshouses(subj)
+function data = mc_preproc_oddball(subj)
 
 if ~isstruct(subj)
   subj = mc_subjinfo(subj);
 end
 
 cfg                     = [];
-if isfield(subj, 'event_faces_houses')
-  cfg.event               = subj.event_faces_houses;
-  cfg.trialdef.eventvalue = (1:24);
-  cfg.trialdef.eventtype  = 'di15';
-else
-  cfg.event               = subj.event;
-  cfg.trialdef.eventtype  = {'house' 'face_male' 'face_female'};
-end
+cfg.event               = subj.event;
+cfg.trialdef.eventtype  = {'standard', 'deviant'};
 cfg.trialdef.prestim    = 0.2;
 cfg.trialdef.poststim   = 0.6 - 1./5000;
 cfg.trialfun            = 'ft_trialfun_general';
@@ -30,20 +24,17 @@ cfg.lpfilter   = 'yes';
 cfg.lpfilttype = 'firws';
 cfg.lpfreq     = 30;
 cfg.padding    = 30;
-cfg.channel    = {'all' '-di15'};
 cfg.usefftfilt = 'yes';
-cfg.demean     = 'yes';
-cfg.baselinewindow = [-inf 0];
+cfg.channel    = {'all' '-di15'};
 data           = ft_preprocessing(cfg);
 
 cfg = [];
-cfg.demean     = 'yes';
+cfg.demean = 'yes';
 cfg.baselinewindow = [-inf 0];
-data           = ft_preprocessing(cfg, data);
-
+data = ft_preprocessing(cfg, data);
 
 % cfg = [];
 % cfg.method = 'summary';
 % data = ft_rejectvisual(cfg, data);
 
-save(fullfile(subj.procdir, sprintf('%s_preproc_faceshouses', subj.subjname)), 'data');
+save(fullfile(subj.procdir, sprintf('%s_preproc_oddball', subj.subjname)), 'data');

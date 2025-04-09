@@ -4,6 +4,10 @@ function mc_data2bids(subj)
 
 ispilot = false;
 if ~isstruct(subj)
+  if ~ischar(subj)
+    subj = sprintf('sub-%03d', subj);
+  end
+
   if startsWith(subj, 'pil')
     ispilot = true;
   end
@@ -11,7 +15,7 @@ if ~isstruct(subj)
 end
 bidsroot = '/project/3031008.01/bids';
 
-% 1. copy over the *.ds data, rename, and create the initial version of the
+% 1. copy over the *.fif data, rename, and create the initial version of the
 % sidecar files.
 docopy = true;
 if docopy
