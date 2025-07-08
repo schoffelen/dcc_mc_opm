@@ -16,7 +16,7 @@ end
 cfg.trialdef.prestim    = 0.2;
 cfg.trialdef.poststim   = 0.6 - 1./5000;
 cfg.trialfun            = 'ft_trialfun_general';
-cfg.dataset             = subj.dataset;
+cfg.dataset             = subj.dataset{2};
 cfg                     = ft_definetrial(cfg);
 trl                     = cfg.trl;
 
@@ -25,7 +25,7 @@ cfg.dataset    = subj.dataset;
 cfg.trl        = trl;
 cfg.hpfilter   = 'yes';
 cfg.hpfilttype = 'firws';
-cfg.hpfreq     = 0.1;
+cfg.hpfreq     = 1;
 cfg.lpfilter   = 'yes';
 cfg.lpfilttype = 'firws';
 cfg.lpfreq     = 30;
@@ -46,4 +46,4 @@ data           = ft_preprocessing(cfg, data);
 % cfg.method = 'summary';
 % data = ft_rejectvisual(cfg, data);
 
-save(fullfile(subj.procdir, sprintf('%s_preproc_faceshouses', subj.subjname)), 'data');
+save(fullfile(subj.procdir, sprintf('%s_preproc_faceshouses_hp1', subj.subjname)), 'data');

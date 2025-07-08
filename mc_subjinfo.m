@@ -1,5 +1,7 @@
 function subj = mc_subjinfo(sub, rawdir, usebids)
 
+pwdir = pwd;
+
 if ~ischar(sub)
   sub = sprintf('sub-%03d', sub);
 end
@@ -35,7 +37,7 @@ else
   if ispilot
     subjname = sprintf('sub-pilot%s', sub(end-1:end));
 
-    % these are the pilot datasets, assume that the dataset specific folder starts with Pilot0x
+    % these are the 6pilot datasets, assume that the dataset specific folder starts with Pilot0x
     cd(rawdir);
     dirstr = sprintf('Pilot%s*', sub(6:7));
     d = dir(dirstr);
@@ -48,22 +50,51 @@ else
 
     % so far this has worked
     basedir = fullfile(pwd, 'ses-opm001');
+    if isequal(subjname, 'sub-013')
+      basedir = strrep(basedir, 'opm001', 'opm02');
+    elseif isequal(subjname, 'sub-021')
+      basedir = strrep(basedir, 'opm001', 'opm021');
+    elseif isequal(subjname, 'sub-022')
+      basedir = strrep(basedir, 'opm001', 'opm022');
+    end
     videodir = fullfile(pwd, 'ses-001');
+
+    % check whether an emptyroom folder exists
+    if exist(fullfile(pwd, 'ses-opmemptyroom'), 'dir')
+      emptyroomexists = true;
+    else
+      emptyroomexists = false;
+    end
   end
   
+  if emptyroomexists
+    d = dir(fullfile(pwd, 'ses-opmemptyroom', '*.fif'))
+    for k = 1:numel(d)
+      dataset_er{k} = fullfile(d(k).folder, d(k).name);
+    end
+  else
+    dataset_er = [];
+  end
 end
 procdir = fullfile(procdir, subjname);
 
 d      = dir(fullfile(videodir, '**'));
 selmp4 = contains({d.name}', 'mp4');
-selannot = contains({d.name}', 'txt');
+selannot = contains({d.name}', 'txt') & startsWith({d.name}', 'sub');
 dmp4   = d(selmp4);
 dannot = d(selannot);
+if isempty(dannot)
+  % fall back option
+  dannot = dir(fullfile(strrep(rawdir, 'raw', 'jansch'), 'Output', sprintf('%s-videocoding.txt', subjname)));
+end
 
 if numel(dmp4)==1
   videofile = fullfile(dmp4(1).folder, dmp4(1).name);
+elseif numel(dmp4)==0
+  warning('no videofile detected in raw folder');
+  videofile = '';
 else
-  error('more than one videofile detected');
+  error('more than one videofile detected, don''t know what to do');
 end
 
 if numel(dannot)==1
@@ -84,16 +115,18 @@ d   = dir(fullfile(basedir, '**'));
 sel = contains({d.name}', 'fif');
 d   = d(sel);
 
-if (~isequal(subjname, 'sub-003') && ~isequal(subjname, 'sub-006')) || numel(d)==1
-  fprintf('found %d fif-files for this subject, keeping the first one:\n', numel(d));
-  keepfif = 1;
-elseif isequal(subjname, 'sub-003') || isequal(subjname, 'sub-006')
-  % exception, the first fif-file in this rawdir should be skipped
-  keepfif = 2;
+if isscalar(d)
+  dataset = fullfile(d(1).folder, d(1).name);
+else
+  dataset = cell(numel(d),1);
+  for k = 1:numel(d)
+    dataset{k} = fullfile(d(k).folder, d(k).name);
+  end
 end
-for k = keepfif
-  fprintf('%s\n', d(k).name);
-  dataset   = fullfile(d(k).folder, d(k).name);
+
+if isequal(subjname, 'sub-006')
+  % here the first recording was 'stopped', and the experiment was restarted
+  dataset = dataset(2);
 end
 
 subj.rawdir   = rawdir;
@@ -105,13 +138,25 @@ subj.dataset  = dataset;
 subj.videofile = videofile;
 subj.annotfile = annotfile;
 
+if exist('dataset_er', 'var')
+  subj.dataset_er = dataset_er;
+end
 
-cfg          = [];
-cfg.dataset  = subj.dataset;
-cfg.trialfun = 'ft_trialfun_show';
-cfg          = ft_definetrial(cfg);
+if ~iscell(subj.dataset)
+  subj.dataset = {subj.dataset};
+end
 
-subj.event   = cfg.event(:);
+for k = 1:numel(subj.dataset)
+  cfg          = [];
+  cfg.dataset  = subj.dataset{k};
+  cfg.trialfun = 'ft_trialfun_show';
+  cfg          = ft_definetrial(cfg);
+
+  subj.event{k} = cfg.event(:);
+end
+if isscalar(subj.dataset)
+  subj.event = subj.event{1};
+end
 
 % exception, I don't know why, but sub-005 has an offset of 2^16 on all
 % trigger values
@@ -122,7 +167,9 @@ if isequal(subj.subjname, 'sub-005') && subj.event(1).value>2^16
 end
 
 if ~isempty(subj.annotfile)
-  [subj.videoevent, subj.videoevent_artctdef] = mc_videoevents(subj);
+  tmpsubj = subj;
+  tmpsubj.event = tmpsubj.event{contains(tmpsubj.dataset, 'faces')};
+  [subj.videoevent, subj.videoevent_artctdef] = mc_videoevents(tmpsubj);
 else
   subj.videoevent = [];
   subj.videoevent_artfctdef = [];
@@ -140,6 +187,10 @@ if ~usebids
   %
   % for the faces houses: values 1-24 reflect the faces/houses individual stimuli
   % for the oddball: the values 1-2 reflect the standard/deviant, and 4/8/16 reflect luminance changes in the movie
+
+  if isequal(subj.subjname, 'sub-003')
+    subj.event = subj.event{2}; % this is overruling the fact that this particular subject has 2 data files with task data, but that the first file does not contain events
+  end
 
   event    = subj.event;
   eventmat = [[event.value]' [event.sample]' diff([event(1).sample;[event.sample]'])];
@@ -242,3 +293,5 @@ if ~usebids
   subj.event      = subj.event_new;
   subj = rmfield(subj, 'event_new');
 end
+
+cd(pwdir);

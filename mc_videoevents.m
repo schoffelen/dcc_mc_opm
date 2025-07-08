@@ -14,23 +14,45 @@ t = readtable(subj.annotfile);
 
 selevents = strcmp(table2array(t(:,1)), '1. Stimulus') & table2array(t(:,end))==1;
 
+if isequal(subj.subjname, 'sub-003')
+  subj.event = subj.event{2};
+end
+
 selevents2 = strcmp({subj.event.type}', 'white');
+if sum(selevents2)==0
+  % fall back to triggers of value 254, this may happen if we end up here
+  % using an event table that has not (yet) been BIDS-converted
+  selevents2 = [subj.event.value]'==254;
+end
 
 twhite = t(selevents, :);
 ewhite = subj.event(selevents2);
 
 if numel(ewhite)==4 && size(twhite,1)==4
   % ok
+elseif isequal(subj.subjname, 'sub-006')
+  % the first 2 white flashes are missing, unfortunately
+  twhite = twhite(3:end,:);
+elseif isequal(subj.subjname, 'sub-003')
+  twhite = twhite([1 3 4 5],:);
+elseif isequal(subj.subjname, 'sub-002')
+  twhite = twhite(2:3,:);
+  ewhite = ewhite(3:4);
 else
   % something wrong
   error('there''s something wrong with the number of ''white'' events');
 end
 
+
 tstamp1 = table2array(twhite(:, end-3));
 tstamp2 = [ewhite.sample]';
-tstamp3 = [ewhite.timestamp]';
 
-X = [tstamp1 ones(4,1)];
+if isfield(ewhite,'timestamp')
+  tstamp3 = [ewhite.timestamp]';
+else
+  tstamp3 = ([ewhite.sample]'-1)./5000;
+end
+X = [tstamp1 ones(numel(ewhite),1)];
 b = X\tstamp2;
 
 bt = X\tstamp3;

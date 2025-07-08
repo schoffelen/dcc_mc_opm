@@ -10,7 +10,7 @@ cfg.trialdef.eventtype  = {'standard', 'deviant'};
 cfg.trialdef.prestim    = 0.2;
 cfg.trialdef.poststim   = 0.6 - 1./5000;
 cfg.trialfun            = 'ft_trialfun_general';
-cfg.dataset             = subj.dataset;
+cfg.dataset             = subj.dataset{1};
 cfg                     = ft_definetrial(cfg);
 trl                     = cfg.trl;
 
