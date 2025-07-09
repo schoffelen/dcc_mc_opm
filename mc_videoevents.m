@@ -14,8 +14,15 @@ t = readtable(subj.annotfile);
 
 selevents = strcmp(table2array(t(:,1)), '1. Stimulus') & table2array(t(:,end))==1;
 
-if isequal(subj.subjname, 'sub-003')
-  subj.event = subj.event{2};
+% currently, the subj.dataset and subj.events may be cell-arrays
+if iscell(subj.event) && iscell(subj.dataset)
+  % check which of the datasets is the task dataset (the other is the emptyroom)
+  sel = find(contains(subj.dataset, 'faceshousesoddball'));
+  if numel(sel)==2
+    % most likely we will need the second one
+    sel = sel(2);
+  end
+  subj.event = subj.event{sel};
 end
 
 selevents2 = strcmp({subj.event.type}', 'white');

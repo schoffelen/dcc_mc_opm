@@ -94,10 +94,6 @@ if docopy
     if numel(subj.dataset)>1
       cfg.run      = num2str(k,'%02d');
     end
-    if isfield(subj, 'event')
-      % this writes a decoded version of the events into the tsv file
-      cfg.events   = subj.event;
-    end
     if ispilot
       cfg.sub = sprintf('pilot%s', subj.subjname(end-1:end));
     else
@@ -140,13 +136,13 @@ if docopy
   end
 
   if isfield(subj, 'videofile') && ~isempty(subj.videofile)
-    fname = sprintf('sub-%s_ses-%s_task-%s_video.mp4', cfg.sub, cfg.ses, cfg.task);
+    fname = sprintf('sub-%s_ses-%s_task-%s_video.mp4', cfg.sub, cfg.ses, 'faceshousesoddball');
     copyfile(subj.videofile, fullfile(destinationdir, fname));
   end
 
   % copy over the video annotation data into the sourcedata folder
   if isfield(subj, 'annotfile') && ~isempty(subj.annotfile)
-    fname = sprintf('sub-%s_ses-%s_task-%s_video-annot.txt', cfg.sub, cfg.ses, cfg.task);
+    fname = sprintf('sub-%s_ses-%s_task-%s_video-annot.txt', cfg.sub, cfg.ses, 'faceshousesoddball');
     copyfile(subj.annotfile, fullfile(destinationdir, fname));
   end
 end

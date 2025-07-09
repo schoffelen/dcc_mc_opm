@@ -168,7 +168,7 @@ end
 
 if ~isempty(subj.annotfile)
   tmpsubj = subj;
-  tmpsubj.event = tmpsubj.event{contains(tmpsubj.dataset, 'faces')};
+  %tmpsubj.event = tmpsubj.event{contains(tmpsubj.dataset, 'faces')};
   [subj.videoevent, subj.videoevent_artctdef] = mc_videoevents(tmpsubj);
 else
   subj.videoevent = [];
@@ -188,7 +188,7 @@ if ~usebids
   % for the faces houses: values 1-24 reflect the faces/houses individual stimuli
   % for the oddball: the values 1-2 reflect the standard/deviant, and 4/8/16 reflect luminance changes in the movie
 
-  if isequal(subj.subjname, 'sub-003')
+  if isequal(subj.subjname, 'sub-003') || isequal(subj.subjname, 'sub-028') || isequal(subj.subjname, 'sub-031')
     subj.event = subj.event{2}; % this is overruling the fact that this particular subject has 2 data files with task data, but that the first file does not contain events
   end
 

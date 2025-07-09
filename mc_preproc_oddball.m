@@ -3,6 +3,15 @@ function data = mc_preproc_oddball(subj)
 if ~isstruct(subj)
   subj = mc_subjinfo(subj);
 end
+if iscell(subj.dataset)
+  sel = find(contains(subj.dataset, 'faceshousesoddball'));
+  if numel(sel)==2
+    % most likely we will need the second one
+    sel = sel(2);
+  end
+  subj.event = subj.event{sel};
+  subj.dataset = subj.dataset{sel};
+end
 
 cfg                     = [];
 cfg.event               = subj.event;
@@ -10,7 +19,7 @@ cfg.trialdef.eventtype  = {'standard', 'deviant'};
 cfg.trialdef.prestim    = 0.2;
 cfg.trialdef.poststim   = 0.6 - 1./5000;
 cfg.trialfun            = 'ft_trialfun_general';
-cfg.dataset             = subj.dataset{1};
+cfg.dataset             = subj.dataset;
 cfg                     = ft_definetrial(cfg);
 trl                     = cfg.trl;
 

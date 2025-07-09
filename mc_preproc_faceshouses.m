@@ -4,6 +4,16 @@ if ~isstruct(subj)
   subj = mc_subjinfo(subj);
 end
 
+if iscell(subj.dataset)
+  sel = find(contains(subj.dataset, 'faceshousesoddball'));
+  if numel(sel)==2
+    % most likely we will need the second one
+    sel = sel(2);
+  end
+  subj.event = subj.event{sel};
+  subj.dataset = subj.dataset{sel};
+end
+
 cfg                     = [];
 if isfield(subj, 'event_faces_houses')
   cfg.event               = subj.event_faces_houses;
@@ -16,7 +26,7 @@ end
 cfg.trialdef.prestim    = 0.2;
 cfg.trialdef.poststim   = 0.6 - 1./5000;
 cfg.trialfun            = 'ft_trialfun_general';
-cfg.dataset             = subj.dataset{2};
+cfg.dataset             = subj.dataset;
 cfg                     = ft_definetrial(cfg);
 trl                     = cfg.trl;
 
